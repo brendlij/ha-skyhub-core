@@ -59,6 +59,47 @@ automation:
             priority: high
 ```
 
+## Rain while the scope is not clear
+
+Only relevant once the controller's scope clearance pin is wired — it is
+disabled by default, and a roof that clears the telescope at any orientation
+does not need it.
+
+With it enabled, a rain closure that finds the scope in the way parks itself and
+waits rather than driving into it. `sensor.*_rain_closure_blocked_by` reads
+`scope_not_safe`. Normally NINA resolves this on its own: SkyHub publishes rain
+through its Alpaca SafetyMonitor, NINA aborts the sequence and parks the mount,
+and the controller — still holding the pending attempt — closes by itself.
+
+When nothing parks the scope, the roof stays open in the rain by design. Alert
+on the combination rather than waiting for the closure to fail:
+
+```yaml
+automation:
+  - alias: Rain while the scope is not clear
+    triggers:
+      - trigger: state
+        entity_id: sensor.skyhub_rain_closure_blocked_by
+        to: scope_not_safe
+        for: "00:00:30"
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.skyhub_rain
+        state: "on"
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: Roof cannot close
+          message: >-
+            It is raining and the telescope is not clear of the roof. Park the
+            mount, or close the roof by hand.
+          data:
+            priority: high
+```
+
+Cutting power to the mount does not help: an unpowered mount stops where it
+stands, still in the way and no longer able to park.
+
 ## After a firmware update
 
 Flashing the controller resets it, which reboots the motor driver and marks
