@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to SkyHub",
+        "description": "Generate a Home Assistant token in SkyHub under Settings, then paste it here.",
+        "data": {
+          "host": "SkyHub address",
+          "token": "Home Assistant token",
+          "verify_ssl": "Verify the TLS certificate"
+        },
+        "data_description": {
+          "host": "For example skyhub-core:11111 or http://192.168.178.108:11111",
+          "verify_ssl": "Turn off only for a self-signed certificate on your own network"
+        }
+      },
+      "reauth_confirm": {
+        "title": "SkyHub token no longer valid",
+        "description": "Generating a new token in SkyHub revokes the previous one. Paste the new token here.",
+        "data": {
+          "token": "Home Assistant token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach SkyHub at that address.",
+      "invalid_auth": "SkyHub rejected this token.",
+      "invalid_host": "That does not look like a usable address."
+    },
+    "abort": {
+      "already_configured": "This SkyHub instance is already set up.",
+      "reauth_successful": "The new token was accepted."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "rain": { "name": "Rain" },
+      "hard_stop": { "name": "Hardware hard stop" },
+      "rain_closure_failed": { "name": "Rain closure failed" },
+      "rain_closure_active": { "name": "Rain closure running" },
+      "close_allowed": { "name": "Closing allowed" },
+      "position_stale": { "name": "Position uncalibrated" }
+    },
+    "sensor": {
+      "close_phase": {
+        "name": "Rain closure phase",
+        "state": {
+          "idle": "Idle",
+          "pending": "Pending",
+          "stopping": "Stopping",
+          "blocked": "Blocked",
+          "closing": "Closing",
+          "closed": "Closed",
+          "interrupted": "Interrupted",
+          "expired": "Expired",
+          "error": "Failed"
+        }
+      },
+      "close_block": { "name": "Rain closure blocked by" },
+      "close_reason": { "name": "Last closure reason" },
+      "driver": { "name": "Roof driver" }
+    }
+  }
+}
