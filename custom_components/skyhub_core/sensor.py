@@ -5,8 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.const import EntityCategory
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -34,6 +38,17 @@ class SkyHubSensorDescription(SensorEntityDescription):
 
 
 SENSORS: tuple[SkyHubSensorDescription, ...] = (
+    # A cover's position is not recorded as a number, so it cannot be
+    # graphed or used in a numeric template. This one can, and it follows
+    # the fast poll interval while the roof travels.
+    SkyHubSensorDescription(
+        key="position",
+        translation_key="position",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+        value_fn=lambda roof: roof.position,
+    ),
     SkyHubSensorDescription(
         key="close_phase",
         translation_key="close_phase",

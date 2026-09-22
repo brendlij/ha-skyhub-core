@@ -42,6 +42,7 @@
       "position_stale": { "name": "Position uncalibrated" }
     },
     "sensor": {
+      "position": { "name": "Position" },
       "close_phase": {
         "name": "Rain closure phase",
         "state": {
