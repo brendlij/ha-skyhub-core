@@ -6,11 +6,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -35,6 +41,7 @@ class SkyHubSensorDescription(SensorEntityDescription):
     value_fn: Callable[[RoofState], str | int | None]
     requires_rain_auto: bool = False
     requires_closure_report: bool = False
+    requires_diagnostics: bool = False
 
 
 SENSORS: tuple[SkyHubSensorDescription, ...] = (
@@ -89,6 +96,78 @@ SENSORS: tuple[SkyHubSensorDescription, ...] = (
         ),
     ),
     SkyHubSensorDescription(
+        key="mode",
+        translation_key="mode",
+        device_class="enum",
+        options=["AUTO", "MANUAL", "OFF", "DISABLED"],
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.mode or None,
+    ),
+    # Milliamps as the controller reports them, converted to amps: a rising
+    # current at unchanged speed means the roof is fighting something.
+    SkyHubSensorDescription(
+        key="motor_current",
+        translation_key="motor_current",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: (
+            None if roof.current_ma is None else roof.current_ma / 1000
+        ),
+    ),
+    SkyHubSensorDescription(
+        key="motor_speed",
+        translation_key="motor_speed",
+        native_unit_of_measurement="rpm",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.speed_rpm,
+    ),
+    SkyHubSensorDescription(
+        key="temp_mcu",
+        translation_key="temp_mcu",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.temp_mcu,
+    ),
+    SkyHubSensorDescription(
+        key="temp_mosfet",
+        translation_key="temp_mosfet",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.temp_mosfet,
+    ),
+    SkyHubSensorDescription(
+        key="temp_brake",
+        translation_key="temp_brake",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.temp_brake,
+    ),
+    SkyHubSensorDescription(
+        key="firmware",
+        translation_key="firmware",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        requires_diagnostics=True,
+        value_fn=lambda roof: roof.fw_version or None,
+    ),
+    SkyHubSensorDescription(
         key="driver",
         translation_key="driver",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -107,6 +186,7 @@ async def async_setup_entry(
         for description in SENSORS
         if (not description.requires_rain_auto or roof.supports_rain_closure)
         and (not description.requires_closure_report or roof.reports_closure)
+        and (not description.requires_diagnostics or roof.reports_diagnostics)
     )
 
 

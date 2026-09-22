@@ -30,6 +30,8 @@ class SkyHubBinarySensorDescription(BinarySensorEntityDescription):
     requires_rain_auto: bool = False
     # Others only exist on firmware that reports the close_* block at all.
     requires_closure_report: bool = False
+    # And these need the SkyHub build that added the drive diagnostics.
+    requires_diagnostics: bool = False
 
 
 SENSORS: tuple[SkyHubBinarySensorDescription, ...] = (
@@ -74,6 +76,21 @@ SENSORS: tuple[SkyHubBinarySensorDescription, ...] = (
         requires_closure_report=True,
         value_fn=lambda roof: roof.close_allowed,
     ),
+    # The Modbus link from the controller to the motor driver. Inverted
+    # into a problem: connected is the normal state, and the entity should
+    # be the thing that lights up when it is not.
+    SkyHubBinarySensorDescription(
+        key="motor_link",
+        translation_key="motor_link",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        requires_diagnostics=True,
+        value_fn=lambda roof: not roof.modbus_connected or roof.comm_fail,
+        attributes_fn=lambda roof: {
+            "modbus_connected": roof.modbus_connected,
+            "comm_fail": roof.comm_fail,
+            "err_flags": roof.err_flags,
+        },
+    ),
     SkyHubBinarySensorDescription(
         key="position_stale",
         translation_key="position_stale",
@@ -94,6 +111,7 @@ async def async_setup_entry(
         for description in SENSORS
         if (not description.requires_rain_auto or roof.supports_rain_closure)
         and (not description.requires_closure_report or roof.reports_closure)
+        and (not description.requires_diagnostics or roof.reports_diagnostics)
     )
 
 

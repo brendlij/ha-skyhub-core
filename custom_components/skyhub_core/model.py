@@ -54,6 +54,26 @@ class RoofState:
     # would otherwise read as "this roof may not close" — the opposite of
     # the truth, since that firmware has no clearance gate to fail.
     reports_closure: bool = False
+
+    # Operating mode and drive health. Added to SkyHub later than the rest,
+    # so an older backend leaves them empty rather than reporting a zero
+    # that would look like a real reading.
+    mode: str = ""
+    motion: str = ""
+    zone: str = ""
+    homed: bool = False
+    current_ma: int | None = None
+    speed_rpm: int | None = None
+    temp_mcu: float | None = None
+    temp_mosfet: float | None = None
+    temp_brake: float | None = None
+    modbus_connected: bool = False
+    comm_fail: bool = False
+    err_flags: str = ""
+    limit_open: bool = False
+    limit_close: bool = False
+    fw_version: str = ""
+    reports_diagnostics: bool = False
     raw: dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     @property
@@ -107,6 +127,24 @@ def _as_int(value: Any) -> int:
     return value
 
 
+def _opt_int(value: Any) -> int | None:
+    """None for anything that is not a real integer reading.
+
+    A missing reading has to stay missing: zero amps and "no measurement"
+    look identical as a number and mean opposite things when you are
+    watching for a drive that is straining.
+    """
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
+def _opt_float(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
 def parse_roof(payload: Any) -> RoofState:
     """Build a RoofState from the API payload, tolerating a partial one.
 
@@ -144,6 +182,22 @@ def parse_roof(payload: Any) -> RoofState:
         close_block=str(payload.get("closeBlock") or ""),
         close_id=_as_int(payload.get("closeId")),
         reports_closure="closePhase" in payload or "closeAllowed" in payload,
+        mode=str(payload.get("mode") or ""),
+        motion=str(payload.get("motion") or ""),
+        zone=str(payload.get("zone") or ""),
+        homed=payload.get("homed") is True,
+        current_ma=_opt_int(payload.get("currentMa")),
+        speed_rpm=_opt_int(payload.get("speedRpm")),
+        temp_mcu=_opt_float(payload.get("tempMcu")),
+        temp_mosfet=_opt_float(payload.get("tempMosfet")),
+        temp_brake=_opt_float(payload.get("tempBrake")),
+        modbus_connected=payload.get("modbusConnected") is True,
+        comm_fail=payload.get("commFail") is True,
+        err_flags=str(payload.get("errFlags") or ""),
+        limit_open=payload.get("limitOpen") is True,
+        limit_close=payload.get("limitClose") is True,
+        fw_version=str(payload.get("fwVersion") or ""),
+        reports_diagnostics="mode" in payload or "currentMa" in payload,
         raw=payload,
     )
 

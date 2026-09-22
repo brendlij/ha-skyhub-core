@@ -74,6 +74,21 @@ class SkyHubRoof(SkyHubEntity, CoverEntity):
             "driver": roof.driver,
             "stream_connected": self.coordinator.stream_connected,
         }
+        if roof.reports_diagnostics:
+            # Ground truth behind the percentage, plus where the controller
+            # thinks it is. Attributes rather than entities: useful when
+            # something is wrong, noise on the device page otherwise.
+            attributes.update(
+                {
+                    "mode": roof.mode,
+                    "motion": roof.motion,
+                    "zone": roof.zone,
+                    "homed": roof.homed,
+                    "limit_open": roof.limit_open,
+                    "limit_close": roof.limit_close,
+                    "firmware": roof.fw_version,
+                }
+            )
         if roof.fault:
             attributes["fault"] = roof.fault
         if roof.close_phase:

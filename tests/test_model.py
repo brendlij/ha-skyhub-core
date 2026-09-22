@@ -195,3 +195,50 @@ def test_closure_report_survives_rain_auto_disabled():
     roof = parse_roof(payload(rainAuto=False, closeAllowed=True, closePhase="idle"))
     assert roof.reports_closure
     assert not roof.supports_rain_closure
+
+
+def diag_payload(**overrides):
+    base = payload()
+    base.update({
+        "mode": "AUTO", "motion": "STOPPED", "zone": "CLOSED", "homed": True,
+        "currentMa": 20, "speedRpm": 0,
+        "tempMcu": 34.6, "tempMosfet": 38.7, "tempBrake": 38.0,
+        "modbusConnected": True, "commFail": False, "errFlags": "",
+        "limitOpen": False, "limitClose": True, "fwVersion": "0.2.0-rain.1",
+    })
+    base.update(overrides)
+    return base
+
+
+def test_diagnostics_are_parsed():
+    roof = parse_roof(diag_payload())
+    assert roof.reports_diagnostics
+    assert roof.mode == "AUTO"
+    assert roof.current_ma == 20
+    assert roof.temp_mosfet == 38.7
+    assert roof.modbus_connected and not roof.comm_fail
+    assert roof.limit_close and not roof.limit_open
+    assert roof.fw_version == "0.2.0-rain.1"
+
+
+def test_older_backend_reports_no_diagnostics():
+    # A SkyHub build from before these fields existed must not produce
+    # zeroed sensors that look like real measurements.
+    roof = parse_roof(payload())
+    assert not roof.reports_diagnostics
+    assert roof.current_ma is None
+    assert roof.temp_mcu is None
+    assert roof.mode == ""
+
+
+@pytest.mark.parametrize("value", [None, "20", True, [], {}])
+def test_missing_measurement_stays_none(value):
+    # Zero amps and "no reading" are the same number and opposite facts.
+    roof = parse_roof(diag_payload(currentMa=value, tempMcu=value))
+    assert roof.current_ma is None
+    assert roof.temp_mcu is None
+
+
+def test_integer_temperature_is_accepted():
+    # JSON drops a trailing .0, so 38.0 can arrive as an int.
+    assert parse_roof(diag_payload(tempBrake=38)).temp_brake == 38.0

@@ -39,7 +39,8 @@
       "rain_closure_failed": { "name": "Rain closure failed" },
       "rain_closure_active": { "name": "Rain closure running" },
       "close_allowed": { "name": "Closing allowed" },
-      "position_stale": { "name": "Position uncalibrated" }
+      "position_stale": { "name": "Position uncalibrated" },
+      "motor_link": { "name": "Motor link" }
     },
     "sensor": {
       "position": { "name": "Position" },
@@ -59,7 +60,22 @@
       },
       "close_block": { "name": "Rain closure blocked by" },
       "close_reason": { "name": "Last closure reason" },
-      "driver": { "name": "Roof driver" }
+      "driver": { "name": "Roof driver" },
+      "mode": {
+        "name": "Operating mode",
+        "state": {
+          "AUTO": "Auto",
+          "MANUAL": "Manual",
+          "OFF": "Off",
+          "DISABLED": "Disabled"
+        }
+      },
+      "motor_current": { "name": "Motor current" },
+      "motor_speed": { "name": "Motor speed" },
+      "temp_mcu": { "name": "Controller temperature" },
+      "temp_mosfet": { "name": "MOSFET temperature" },
+      "temp_brake": { "name": "Brake temperature" },
+      "firmware": { "name": "Controller firmware" }
     }
   }
 }
