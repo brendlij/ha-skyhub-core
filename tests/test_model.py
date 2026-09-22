@@ -242,3 +242,20 @@ def test_missing_measurement_stays_none(value):
 def test_integer_temperature_is_accepted():
     # JSON drops a trailing .0, so 38.0 can arrive as an int.
     assert parse_roof(diag_payload(tempBrake=38)).temp_brake == 38.0
+
+
+def test_fault_is_a_state_of_its_own():
+    # A latched fault stops the roof entirely. It has to be visible as a
+    # state change, not just as an attribute nobody is watching.
+    assert not parse_roof(diag_payload()).in_fault
+    roof = parse_roof(diag_payload(fault="modbus communication lost"))
+    assert roof.in_fault
+    assert roof.fault == "modbus communication lost"
+
+
+def test_stale_position_still_reports_a_number():
+    # The value stays available for display; refusing to *drive* to it is
+    # the caller's job, not the parser's.
+    roof = parse_roof(diag_payload(percent=37, percentStale=True))
+    assert roof.position == 37
+    assert roof.position_stale

@@ -92,6 +92,17 @@ class RoofState:
         return self.state == "closing"
 
     @property
+    def in_fault(self) -> bool:
+        """The controller has latched a fault and will not move until reset.
+
+        Faults are how the roof refuses to do anything further: a motor
+        error flag, lost Modbus, a homing range that came out too small.
+        The roof stays where it is until someone clears it, so this needs
+        to be visible on its own rather than buried in an attribute.
+        """
+        return bool(self.fault)
+
+    @property
     def rain_closure_failed(self) -> bool:
         """True when an autonomous rain closure gave up.
 

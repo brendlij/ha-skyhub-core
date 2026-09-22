@@ -31,15 +31,33 @@ class SkyHubRoof(SkyHubEntity, CoverEntity):
 
     _attr_name = None  # the device is the roof; no sub-name
     _attr_device_class = CoverDeviceClass.SHUTTER
-    _attr_supported_features = (
-        CoverEntityFeature.OPEN
-        | CoverEntityFeature.CLOSE
-        | CoverEntityFeature.STOP
-        | CoverEntityFeature.SET_POSITION
-    )
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator, "roof")
+
+    @property
+    def supported_features(self) -> CoverEntityFeature:
+        """Drop SET_POSITION while the position cannot be trusted.
+
+        Open, close and stop drive onto physical end stops and need no
+        calibration, so they stay available. A percentage move aims at a
+        counter, and after the controller reboots — a firmware update, a
+        fault reset — that counter is a best guess until a homing run
+        re-measures it.
+
+        SkyHub's own interface greys the slider out for exactly this
+        reason. Leaving it live here would mean two interfaces answering
+        the same question differently, with Home Assistant being the
+        careless one.
+        """
+        features = (
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+        )
+        if not self.roof.position_stale:
+            features |= CoverEntityFeature.SET_POSITION
+        return features
 
     @property
     def is_closed(self) -> bool | None:
@@ -117,4 +135,13 @@ class SkyHubRoof(SkyHubEntity, CoverEntity):
         await self._async_send("STOP")
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
+        # Removing the feature greys out the slider, but a script can still
+        # call the service directly. Refusing here says why, instead of
+        # sending the roof to a position derived from a stale counter.
+        if self.roof.position_stale:
+            raise HomeAssistantError(
+                "Roof position is uncalibrated after a controller reboot. "
+                "Run a homing cycle before moving to a position, or use "
+                "open and close, which drive onto the end stops."
+            )
         await self._async_send(position_command(int(kwargs[ATTR_POSITION])))

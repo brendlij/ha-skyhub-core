@@ -15,6 +15,7 @@ One device with:
 | --- | --- | --- |
 | Roof | `cover` | open / close / stop / set position, `shutter` class |
 | Rain | `binary_sensor` | `moisture`, straight from the controller's sensor |
+| Controller fault | `binary_sensor` | `problem`, latched — nothing moves until it is cleared |
 | Hardware hard stop | `binary_sensor` | `problem`, latched by the controller itself |
 | Rain closure failed | `binary_sensor` | `problem` — **see below** |
 | Rain closure running | `binary_sensor` | an autonomous closure is under way |
@@ -57,6 +58,25 @@ automation:
           data:
             priority: high
 ```
+
+## After a firmware update
+
+Flashing the controller resets it, which reboots the motor driver and marks
+the position as uncalibrated. Expect all of this, none of it is a fault:
+
+- a brief unavailable window while the controller reboots
+- `binary_sensor.*_hard_stop` on for a few seconds — the watchdog relay drops
+  on boot and is only released once Modbus is proven healthy
+- `binary_sensor.*_position_uncalibrated` on, and the cover's position slider
+  greyed out. Open, close and stop still work: they drive onto physical end
+  stops. A percentage move aims at a counter the controller no longer
+  vouches for, so it is withheld until a homing run re-measures the range
+- possibly a latched fault to clear, if the drive was unreachable during the
+  reset window
+
+Reload the integration afterwards. Entities are created at setup, so ones
+that only exist on the newer firmware — the rain closure sensors — will not
+appear until the config entry is reloaded.
 
 ## Setup
 

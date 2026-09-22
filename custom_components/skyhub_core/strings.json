@@ -35,6 +35,7 @@
   "entity": {
     "binary_sensor": {
       "rain": { "name": "Rain" },
+      "fault": { "name": "Controller fault" },
       "hard_stop": { "name": "Hardware hard stop" },
       "rain_closure_failed": { "name": "Rain closure failed" },
       "rain_closure_active": { "name": "Rain closure running" },

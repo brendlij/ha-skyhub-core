@@ -41,6 +41,16 @@ SENSORS: tuple[SkyHubBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.MOISTURE,
         value_fn=lambda roof: roof.rain,
     ),
+    # A latched controller fault. Nothing moves until it is cleared, so
+    # this belongs in the logbook and in automations, not only in an
+    # attribute where a state change leaves no trace.
+    SkyHubBinarySensorDescription(
+        key="fault",
+        translation_key="fault",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        value_fn=lambda roof: roof.in_fault,
+        attributes_fn=lambda roof: {"reason": roof.fault, "err_flags": roof.err_flags},
+    ),
     SkyHubBinarySensorDescription(
         key="hard_stop",
         translation_key="hard_stop",
