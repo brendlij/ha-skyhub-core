@@ -45,6 +45,11 @@ where an iframe pointing at SkyHub on the LAN would simply go blank. When the
 controller is unreachable the roof holds its last known position rather than
 snapping to an arbitrary one.
 
+The view starts locked: a live 3D scene swallows the scroll wheel, so a
+dashboard scrolled past it would zoom the roof instead of moving the page.
+Click the padlock to orbit and zoom, click it again to hand scrolling back.
+Set `locked: false` in the card config to start unlocked.
+
 The card and its models are served by the integration at
 `/skyhub_core_static`; nothing needs adding to the Lovelace resource list.
 

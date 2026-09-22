@@ -16572,7 +16572,11 @@ var ev = ["aria-label"], tv = {
 			default: "/models",
 			type: String
 		},
-		previewPercent: { type: [Number, null] }
+		previewPercent: { type: [Number, null] },
+		interactive: {
+			type: Boolean,
+			default: !0
+		}
 	},
 	setup(e, { expose: t }) {
 		let n = e, r = /* @__PURE__ */ zt(null), i = /* @__PURE__ */ zt(""), a = /* @__PURE__ */ zt(!0), o = /* @__PURE__ */ zt({
@@ -16618,7 +16622,9 @@ var ev = ["aria-label"], tv = {
 				e instanceof bu && (e.material = D, e.castShadow = !1, e.receiveShadow = !1);
 			}), e.visible = !1, u.add(e), m = e;
 		}
-		En(() => n.percent, (e) => {
+		En(() => n.interactive, (e) => {
+			f && (f.enabled = e);
+		}), En(() => n.percent, (e) => {
 			e != null && Number.isFinite(e) && e >= 0 ? ae(e) : (b = !1, y = x = v, oe(v));
 		}), En(() => n.previewPercent, (e) => {
 			if (e == null) {
@@ -16632,7 +16638,7 @@ var ev = ["aria-label"], tv = {
 			u = new $c(), d = new Pf(45, e.clientWidth / e.clientHeight, .1, 100), d.position.copy(O), l = new Dg({
 				antialias: !0,
 				alpha: !0
-			}), l.setPixelRatio(Math.min(window.devicePixelRatio, 2)), l.setSize(e.clientWidth, e.clientHeight), l.toneMapping = 4, l.toneMappingExposure = 1, l.shadowMap.enabled = !0, l.shadowMap.type = 2, l.shadowMap.autoUpdate = !1, e.appendChild(l.domElement), f = new z_(d, l.domElement), f.enableDamping = !0, f.target.copy(k), f.autoRotateSpeed = 1.2;
+			}), l.setPixelRatio(Math.min(window.devicePixelRatio, 2)), l.setSize(e.clientWidth, e.clientHeight), l.toneMapping = 4, l.toneMappingExposure = 1, l.shadowMap.enabled = !0, l.shadowMap.type = 2, l.shadowMap.autoUpdate = !1, e.appendChild(l.domElement), f = new z_(d, l.domElement), f.enabled = n.interactive, f.enableDamping = !0, f.target.copy(k), f.autoRotateSpeed = 1.2;
 			let t = new Q_(), m = new Pp(l);
 			E = m.fromScene(t, .04), u.environment = E.texture, u.environmentIntensity = .35, t.dispose(), m.dispose(), u.add(new Sf(15397631, 7431510, .6));
 			let C = new Vf(16773340, 2.3);
@@ -16722,7 +16728,7 @@ var ev = ["aria-label"], tv = {
 			li("", !0)
 		], 8, ev));
 	}
-}), [["styles", [".viewer[data-v-d4d6bfd5]{aspect-ratio:3/2;background:var(--bg-inset);border-radius:0;width:100%;position:relative;overflow:hidden}.viewer__canvas[data-v-d4d6bfd5]{width:100%;height:100%}.viewer__loading[data-v-d4d6bfd5]{pointer-events:none;justify-content:center;align-items:center;display:flex;position:absolute;inset:0}.viewer__spinner[data-v-d4d6bfd5]{border:3px solid var(--border-color);border-top-color:var(--text-secondary);border-radius:50%;width:32px;height:32px;animation:.8s linear infinite viewer-spin-d4d6bfd5}@keyframes viewer-spin-d4d6bfd5{to{transform:rotate(360deg)}}.viewer__error[data-v-d4d6bfd5]{bottom:var(--space-3);left:var(--space-3);right:var(--space-3);color:var(--status-danger);background:var(--bg-card);padding:var(--space-2) var(--space-3);border-radius:var(--radius-input);margin:0;font-size:13px;position:absolute}.viewer__camera-readout[data-v-d4d6bfd5]{top:var(--space-2);left:var(--space-2);color:var(--text-muted);border-radius:var(--radius-input);pointer-events:none;background:#00000080;flex-direction:column;gap:2px;padding:4px 8px;font-family:ui-monospace,monospace;font-size:11px;display:flex;position:absolute}"]], ["__scopeId", "data-v-d4d6bfd5"]]), { shadowRoot: !0 });
+}), [["styles", [".viewer[data-v-3b020f92]{aspect-ratio:3/2;background:var(--bg-inset);border-radius:0;width:100%;position:relative;overflow:hidden}.viewer__canvas[data-v-3b020f92]{width:100%;height:100%}.viewer__loading[data-v-3b020f92]{pointer-events:none;justify-content:center;align-items:center;display:flex;position:absolute;inset:0}.viewer__spinner[data-v-3b020f92]{border:3px solid var(--border-color);border-top-color:var(--text-secondary);border-radius:50%;width:32px;height:32px;animation:.8s linear infinite viewer-spin-3b020f92}@keyframes viewer-spin-3b020f92{to{transform:rotate(360deg)}}.viewer__error[data-v-3b020f92]{bottom:var(--space-3);left:var(--space-3);right:var(--space-3);color:var(--status-danger);background:var(--bg-card);padding:var(--space-2) var(--space-3);border-radius:var(--radius-input);margin:0;font-size:13px;position:absolute}.viewer__camera-readout[data-v-3b020f92]{top:var(--space-2);left:var(--space-2);color:var(--text-muted);border-radius:var(--radius-input);pointer-events:none;background:#00000080;flex-direction:column;gap:2px;padding:4px 8px;font-family:ui-monospace,monospace;font-size:11px;display:flex;position:absolute}"]], ["__scopeId", "data-v-3b020f92"]]), { shadowRoot: !0 });
 customElements.get("skyhub-roof-3d") || customElements.define("skyhub-roof-3d", iv);
 //#endregion
 export { iv as SkyHubRoof3D };

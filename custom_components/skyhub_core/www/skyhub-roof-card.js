@@ -7,19 +7,29 @@
 // solved for remote access, and the roof keeps its last known position on
 // screen even while SkyHub is unreachable.
 
-// The viewer itself, built from the same source as SkyHub's own 3D view.
-// Imported statically so the element is defined before the first render;
-// the integration loads this file as a module.
-import "/skyhub_core_static/skyhub-roof-3d.js";
-
 const STATIC_BASE = "/skyhub_core_static";
+const VIEWER_URL = `${STATIC_BASE}/skyhub-roof-3d.js`;
+
+// The viewer is imported lazily rather than at module scope. A top-level
+// import that fails aborts the whole module, so customElements.define below
+// never runs and Lovelace reports "Custom element doesn't exist" — naming
+// the card, which is fine, instead of the file that actually failed.
+// Loading it here keeps the card registered and able to say what went wrong.
+let viewerPromise = null;
+function loadViewer() {
+  if (!viewerPromise) viewerPromise = import(VIEWER_URL);
+  return viewerPromise;
+}
 
 class SkyHubRoofCard extends HTMLElement {
   #element = null;
   #status = null;
+  #lock = null;
   #entity = null;
   #title = "";
+  #locked = true;
   #lastPercent = null;
+  #hass = null;
 
   static getStubConfig(hass) {
     const cover = Object.keys(hass?.states ?? {}).find(
@@ -34,6 +44,10 @@ class SkyHubRoofCard extends HTMLElement {
     }
     this.#entity = config.entity;
     this.#title = config.title ?? "";
+    // Locked by default. An unlocked scene swallows the wheel, so scrolling
+    // the dashboard past the card zooms the roof instead of moving the page,
+    // and a stray drag leaves the view pointing somewhere nobody chose.
+    this.#locked = config.locked !== false;
     this.#render();
   }
 
@@ -42,8 +56,14 @@ class SkyHubRoofCard extends HTMLElement {
   }
 
   set hass(hass) {
+    this.#hass = hass;
+    this.#update();
+  }
+
+  #update() {
+    const hass = this.#hass;
+    if (!hass || !this.#element) return;
     const state = hass.states[this.#entity];
-    if (!this.#element) return;
 
     if (!state || state.state === "unavailable") {
       // Keep the last rendered position rather than snapping the roof to
@@ -77,6 +97,30 @@ class SkyHubRoofCard extends HTMLElement {
     }
   }
 
+  #applyLock() {
+    if (!this.#element) return;
+    // The attribute freezes OrbitControls inside the viewer; pointer-events
+    // lets the page scroll normally even before the viewer has loaded.
+    if (this.#locked) {
+      this.#element.setAttribute("locked", "");
+      this.#element.style.pointerEvents = "none";
+    } else {
+      this.#element.removeAttribute("locked");
+      this.#element.style.pointerEvents = "auto";
+    }
+    if (this.#lock) {
+      this.#lock.textContent = this.#locked ? "\u{1F512}" : "\u{1F513}";
+      this.#lock.title = this.#locked
+        ? "Unlock to orbit and zoom"
+        : "Lock, so the page scrolls again";
+      this.#lock.setAttribute("aria-pressed", String(!this.#locked));
+      this.#lock.setAttribute(
+        "aria-label",
+        this.#locked ? "Unlock the 3D view" : "Lock the 3D view",
+      );
+    }
+  }
+
   #render() {
     if (this.#element) return;
     const card = document.createElement("ha-card");
@@ -97,9 +141,32 @@ class SkyHubRoofCard extends HTMLElement {
       "position:absolute;bottom:12px;left:16px;font-size:12px;padding:4px 8px;" +
       "border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)";
 
-    viewport.append(this.#element, this.#status);
+    this.#lock = document.createElement("button");
+    this.#lock.type = "button";
+    this.#lock.style.cssText =
+      "position:absolute;top:12px;right:12px;width:32px;height:32px;line-height:1;" +
+      "font-size:15px;cursor:pointer;border:none;border-radius:8px;" +
+      "background:var(--card-background-color);color:var(--primary-text-color);opacity:0.85";
+    this.#lock.addEventListener("click", () => {
+      this.#locked = !this.#locked;
+      this.#applyLock();
+    });
+
+    viewport.append(this.#element, this.#status, this.#lock);
     card.append(viewport);
     this.replaceChildren(card);
+    this.#applyLock();
+
+    loadViewer().then(
+      () => this.#update(),
+      (error) => {
+        // Name the file that failed. The card stays registered either way,
+        // so the dashboard shows this rather than a missing-element message
+        // pointing at the wrong thing.
+        this.#setStatus(`3D viewer failed to load from ${VIEWER_URL}`);
+        console.error("skyhub-roof-card: could not load the viewer", error);
+      },
+    );
   }
 }
 
