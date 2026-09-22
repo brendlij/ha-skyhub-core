@@ -28,6 +28,26 @@ The rain closure entities only appear when the controller reports that it can
 close by itself. Firmware 0.1.0 reports rain without acting on it, and the
 integration will not pretend otherwise.
 
+## The 3D roof card
+
+The integration ships a Lovelace card showing the roof in 3D, built from the
+same source as SkyHub's own view. Add it to a dashboard as a manual card:
+
+```yaml
+type: custom:skyhub-roof-card
+entity: cover.skyhub
+title: Observatory roof
+```
+
+It makes no network call of its own. The position comes from the cover
+entity, so it works wherever Home Assistant works — including remote access,
+where an iframe pointing at SkyHub on the LAN would simply go blank. When the
+controller is unreachable the roof holds its last known position rather than
+snapping to an arbitrary one.
+
+The card and its models are served by the integration at
+`/skyhub_core_static`; nothing needs adding to the Lovelace resource list.
+
 ## The one alarm worth wiring up
 
 `binary_sensor.rain_closure_failed` turns on when the controller started an

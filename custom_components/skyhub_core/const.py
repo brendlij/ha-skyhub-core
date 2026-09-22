@@ -37,3 +37,8 @@ PATH_EVENTS = "/api/ha/events"
 
 MANUFACTURER = "SkyHub"
 MODEL = "Observatory roof"
+
+# Where the integration serves its own frontend assets: the 3D card, the
+# viewer bundle and the two .glb models. A fixed path rather than one per
+# config entry, because a dashboard resource URL has to stay stable.
+STATIC_URL = "/skyhub_core_static"
