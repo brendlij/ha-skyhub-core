@@ -168,3 +168,30 @@ def test_roof_state_defaults_are_safe():
     assert roof.is_closed is None
     assert not roof.supports_rain_closure
     assert not roof.rain_closure_failed
+
+
+def test_old_firmware_does_not_claim_closing_is_disallowed():
+    # Firmware 0.1.0 omits close_allowed. Defaulting it to false would read
+    # as "this roof may not close", the opposite of the truth: that build
+    # has no clearance gate that could fail. reports_closure lets the
+    # integration leave the entity out instead of stating something false.
+    roof = parse_roof(
+        {"available": True, "state": "closed", "percent": 0, "rain": False}
+    )
+    assert not roof.reports_closure
+    assert not roof.close_allowed  # the raw value stays false...
+    # ...but nothing may present it, because the controller never said it.
+
+
+def test_new_firmware_reports_closure_block():
+    roof = parse_roof(payload(closeAllowed=True, closePhase="idle"))
+    assert roof.reports_closure
+    assert roof.close_allowed
+
+
+def test_closure_report_survives_rain_auto_disabled():
+    # A build with RAIN_AUTO_CLOSE=false still sends the close_* block, so
+    # the diagnostics stay while the rain automation entities disappear.
+    roof = parse_roof(payload(rainAuto=False, closeAllowed=True, closePhase="idle"))
+    assert roof.reports_closure
+    assert not roof.supports_rain_closure

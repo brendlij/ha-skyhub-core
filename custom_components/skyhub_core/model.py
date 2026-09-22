@@ -49,6 +49,11 @@ class RoofState:
     close_phase: str = ""
     close_block: str = ""
     close_id: int = 0
+    # Whether the controller reported the close_* block at all. Absent on
+    # firmware before 0.2.0-rain.1, where close_allowed defaulting to false
+    # would otherwise read as "this roof may not close" — the opposite of
+    # the truth, since that firmware has no clearance gate to fail.
+    reports_closure: bool = False
     raw: dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     @property
@@ -138,6 +143,7 @@ def parse_roof(payload: Any) -> RoofState:
         close_phase=str(payload.get("closePhase") or ""),
         close_block=str(payload.get("closeBlock") or ""),
         close_id=_as_int(payload.get("closeId")),
+        reports_closure="closePhase" in payload or "closeAllowed" in payload,
         raw=payload,
     )
 

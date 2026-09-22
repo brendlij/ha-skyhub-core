@@ -28,6 +28,8 @@ class SkyHubBinarySensorDescription(BinarySensorEntityDescription):
     attributes_fn: Callable[[RoofState], dict[str, Any]] | None = None
     # Some readings only exist on firmware that can close on its own.
     requires_rain_auto: bool = False
+    # Others only exist on firmware that reports the close_* block at all.
+    requires_closure_report: bool = False
 
 
 SENSORS: tuple[SkyHubBinarySensorDescription, ...] = (
@@ -69,6 +71,7 @@ SENSORS: tuple[SkyHubBinarySensorDescription, ...] = (
         key="close_allowed",
         translation_key="close_allowed",
         entity_category=EntityCategory.DIAGNOSTIC,
+        requires_closure_report=True,
         value_fn=lambda roof: roof.close_allowed,
     ),
     SkyHubBinarySensorDescription(
@@ -89,7 +92,8 @@ async def async_setup_entry(
     async_add_entities(
         SkyHubBinarySensor(coordinator, description)
         for description in SENSORS
-        if not description.requires_rain_auto or roof.supports_rain_closure
+        if (not description.requires_rain_auto or roof.supports_rain_closure)
+        and (not description.requires_closure_report or roof.reports_closure)
     )
 
 

@@ -30,6 +30,7 @@ from .model import (
 class SkyHubSensorDescription(SensorEntityDescription):
     value_fn: Callable[[RoofState], str | int | None]
     requires_rain_auto: bool = False
+    requires_closure_report: bool = False
 
 
 SENSORS: tuple[SkyHubSensorDescription, ...] = (
@@ -49,14 +50,14 @@ SENSORS: tuple[SkyHubSensorDescription, ...] = (
             PHASE_ERROR,
         ],
         entity_category=EntityCategory.DIAGNOSTIC,
-        requires_rain_auto=True,
+        requires_closure_report=True,
         value_fn=lambda roof: roof.close_phase or None,
     ),
     SkyHubSensorDescription(
         key="close_block",
         translation_key="close_block",
         entity_category=EntityCategory.DIAGNOSTIC,
-        requires_rain_auto=True,
+        requires_closure_report=True,
         # "none" is the firmware's way of saying nothing blocked it; an
         # empty sensor reads better in Home Assistant than the word none.
         value_fn=lambda roof: (
@@ -67,7 +68,7 @@ SENSORS: tuple[SkyHubSensorDescription, ...] = (
         key="close_reason",
         translation_key="close_reason",
         entity_category=EntityCategory.DIAGNOSTIC,
-        requires_rain_auto=True,
+        requires_closure_report=True,
         value_fn=lambda roof: (
             None if roof.close_reason in ("", "none") else roof.close_reason
         ),
@@ -89,7 +90,8 @@ async def async_setup_entry(
     async_add_entities(
         SkyHubSensor(coordinator, description)
         for description in SENSORS
-        if not description.requires_rain_auto or roof.supports_rain_closure
+        if (not description.requires_rain_auto or roof.supports_rain_closure)
+        and (not description.requires_closure_report or roof.reports_closure)
     )
 
 
